@@ -2,11 +2,10 @@
 
 namespace App\Entity;
 
+use JetBrains\PhpStorm\Pure;
+use Doctrine\ORM\Mapping as ORM;
 use App\Repository\FruitRepository;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
-use JetBrains\PhpStorm\Pure;
 
 #[ORM\Entity(repositoryClass: FruitRepository::class)]
 class Fruit
