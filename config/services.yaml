@@ -22,3 +22,17 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Serializer\Normalizer\FruitNormalizer:
+        tags: [serializer.normalizer]
+    App\Serializer\Normalizer\UserNormalizer:
+        tags: [serializer.normalizer]
+    App\Serializer\Normalizer\QueryResultNormalizer:
+        tags: [ serializer.normalizer ]
+
+    Doctrine\Persistence\ObjectManager:
+        alias: doctrine.orm.default_entity_manager
+
+    app.custom_authenticator:
+        class: App\Security\CustomAuthenticator
+        parent: lexik_jwt_authentication.security.jwt_authenticator
