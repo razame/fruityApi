@@ -7,6 +7,8 @@ use App\Entity\User;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,11 +17,12 @@ use Symfony\Component\Serializer\SerializerInterface;
 class FruitsController extends AbstractController
 {
 
-    private $serializer;
+    private $serializer, $security;
 
-    public function __construct(SerializerInterface $serializer)
+    public function __construct(SerializerInterface $serializer, Security $security)
     {
         $this->serializer = $serializer;
+        $this->security = $security;
     }
 
     #[Route('/api/fruits', name: 'fruit_list')]
@@ -39,7 +42,7 @@ class FruitsController extends AbstractController
             $query = $query->andWhere('f.family = :familyFilter')->setParameter('familyFilter', $familyFilter);
         }
 
-        if($nameFilter !== ''){
+        if ($nameFilter !== '') {
             $query = $query->andWhere('f.name = :nameFilter')->setParameter('nameFilter', $nameFilter);
         }
 
@@ -69,17 +72,47 @@ class FruitsController extends AbstractController
     }
 
 
-    #[Route('/save-favorite-fruit', name: 'save_favorite_fruit')]
+    #[Route('/api/save-favorite-fruit', name: 'save_favorite_fruit')]
     public function saveFavoriteFruit(Request $request, EntityManagerInterface $entityManager)
     {
-        $user = $entityManager->getRepository(User::class)->find(1);
-        $fruit = $entityManager->getRepository(Fruit::class)->find(11);
+        $fruitId = $request->query->getInt('fruit_id');
+
+        if (!$fruitId) {
+            return $this->json([
+                'message' => 'Please provide fruit_id so we can add that to your basket of favorites!',
+            ]);
+        }
+
+
+        $fruit = $entityManager->getRepository(Fruit::class)->find($fruitId);
+
+        if (!$fruit) {
+            return $this->json([
+                'message' => 'Requested fruit not found!',
+            ]);
+        }
+
+        $user = $this->security->getUser();
+
+        if (empty($user)) {
+            return $this->json([
+                'message' => 'You are not authenticated!',
+            ]);
+        }
+
+        $user = $entityManager->getRepository(User::class)->find($user->getId());
 
         $favoriteFruits = $user->getFavoriteFruits();
 
         if(count($favoriteFruits) === 10){
             return $this->json([
                 'message' => 'Your basket is full of your favorite fruits!',
+            ]);
+        }
+
+        if( $favoriteFruits->contains($fruit) ){
+            return $this->json([
+                'message' => 'This fruit is already in your basket of favorites!',
             ]);
         }
 
@@ -92,16 +125,46 @@ class FruitsController extends AbstractController
         ]);
     }
 
-    #[Route('/remove-favorite-fruit', name: 'remove_favorite_fruit')]
-    public function removeFavoriteFruit(Request $request, EntityManagerInterface $entityManager)
+    #[Route('/api/remove-favorite-fruit', name: 'remove_favorite_fruit')]
+    public function removeFavoriteFruit(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $fruitId = $request->query->getInt('fruit_id');
-        $user = $entityManager->getRepository(User::class)->find(1);
+
+        if(!$fruitId) {
+            return $this->json([
+                'message' => 'Please provide fruit_id so we can remove that from your basket of favorites!',
+            ]);
+        }
+
+
         $fruit = $entityManager->getRepository(Fruit::class)->find($fruitId);
+
+        if (!$fruit) {
+            return $this->json([
+                'message' => 'Requested fruit not found!',
+            ]);
+        }
+
+        $user = $this->security->getUser();
+
+        if (empty($user)) {
+            return $this->json([
+                'message' => 'You are not authenticated!',
+            ]);
+        }
+
+        $user = $entityManager->getRepository(User::class)->find($user->getId());
+
 
         $favoriteFruits = $user->getFavoriteFruits();
 
-        if(count($favoriteFruits) === 0){
+        if (!$favoriteFruits->contains($fruit)) {
+            return $this->json([
+                'message' => 'This fruit is already NOT in your basket of favorites!',
+            ]);
+        }
+
+        if (count($favoriteFruits) === 0) {
             return $this->json([
                 'message' => 'Your basket of favorite fruits is already empty!',
             ]);

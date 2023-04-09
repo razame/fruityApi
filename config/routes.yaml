@@ -12,11 +12,11 @@ fruit_list:
     controller: App\Controller\FruitsController::list
 
 save_favorite_fruit:
-    path: /save-favorite-fruit
+    path: /api/save-favorite-fruit
     controller: App\Controller\FruitsController::saveFavoriteFruit
     methods: POST
 
 remove_favorite_fruit:
-    path: /remove-favorite-fruit
+    path: /api/remove-favorite-fruit
     controller: App\Controller\FruitsController::removeFavoriteFruit
     methods: POST
