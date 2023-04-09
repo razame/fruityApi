@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Fruit;
 use App\Entity\User;
-use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -26,7 +25,7 @@ class FruitsController extends AbstractController
     }
 
     #[Route('/api/fruits', name: 'fruit_list')]
-    public function list(Request $request, EntityManagerInterface $entityManager)
+    public function list(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $page = $request->query->getInt('page', 1);
         $pageSize = $request->query->getInt('pageSize', 10);
@@ -73,7 +72,7 @@ class FruitsController extends AbstractController
 
 
     #[Route('/api/save-favorite-fruit', name: 'save_favorite_fruit')]
-    public function saveFavoriteFruit(Request $request, EntityManagerInterface $entityManager)
+    public function saveFavoriteFruit(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $fruitId = $request->query->getInt('fruit_id');
 
