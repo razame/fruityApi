@@ -9,7 +9,7 @@ api_login_check:
 
 fruit_list:
     path: /api/fruits
-    controller: App\Controller\FruitsController::list
+    controller: App\Controller\FruitsController::listOfFruits
 
 save_favorite_fruit:
     path: /api/save-favorite-fruit

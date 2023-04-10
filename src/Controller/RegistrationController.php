@@ -19,10 +19,10 @@ class RegistrationController extends AbstractController
     {
         // ... e.g. get the user data from a registration form
         $user = new User();
-        $email = $request->query->getAlpha('email');
-        $password = $request->query->getAlpha('password');
-        $name = $request->query->getAlpha('name');
-        $username = $request->query->getAlpha('username');
+        $email = $request->get('email');
+        $password = $request->get('password');
+        $name = $request->get('name');
+        $username = $request->get('username');
 
         $user->setEmail($email);
         $user->setIsActive(1);

@@ -25,12 +25,12 @@ class FruitsController extends AbstractController
     }
 
     #[Route('/api/fruits', name: 'fruit_list')]
-    public function list(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function listOfFruits(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        $page = $request->query->getInt('page', 1);
-        $pageSize = $request->query->getInt('pageSize', 10);
-        $familyFilter = $request->query->getAlpha('family', '');
-        $nameFilter = $request->query->getAlpha('name', '');
+        $page = $request->get('page', 1);
+        $pageSize = $request->get('pageSize', 10);
+        $familyFilter = $request->get('family', '');
+        $nameFilter = $request->get('name', '');
 
         $repository = $entityManager->getRepository(Fruit::class);
 
@@ -64,6 +64,11 @@ class FruitsController extends AbstractController
             ->setMaxResults($pageSize) // set the limit
             ->getResult();
 
+        foreach ($fruits as $fruit){
+            $user = $entityManager->getRepository(User::class)->find($this->security->getUser()->getId());
+            $fruit->isFavorite = $user->getFavoriteFruits()->contains($fruit);
+        }
+
         return $this->json([
             'fruits'        => $this->serializer->normalize($fruits),
             'totalPages'    => $pagesCount
@@ -74,12 +79,12 @@ class FruitsController extends AbstractController
     #[Route('/api/save-favorite-fruit', name: 'save_favorite_fruit')]
     public function saveFavoriteFruit(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        $fruitId = $request->query->getInt('fruit_id');
+        $fruitId = $request->get('fruit_id');
 
         if (!$fruitId) {
             return $this->json([
                 'message' => 'Please provide fruit_id so we can add that to your basket of favorites!',
-            ]);
+            ], 400);
         }
 
 
@@ -88,7 +93,7 @@ class FruitsController extends AbstractController
         if (!$fruit) {
             return $this->json([
                 'message' => 'Requested fruit not found!',
-            ]);
+            ], 404);
         }
 
         $user = $this->security->getUser();
@@ -96,7 +101,7 @@ class FruitsController extends AbstractController
         if (empty($user)) {
             return $this->json([
                 'message' => 'You are not authenticated!',
-            ]);
+            ], 401);
         }
 
         $user = $entityManager->getRepository(User::class)->find($user->getId());
@@ -106,13 +111,13 @@ class FruitsController extends AbstractController
         if(count($favoriteFruits) === 10){
             return $this->json([
                 'message' => 'Your basket is full of your favorite fruits!',
-            ]);
+            ], 400);
         }
 
         if( $favoriteFruits->contains($fruit) ){
             return $this->json([
-                'message' => 'This fruit is already in your basket of favorites!',
-            ]);
+                'message' => $fruit->getName().' is already in your basket of favorites!',
+            ], 400);
         }
 
         $user->getFavoriteFruits()->add($fruit);
@@ -127,12 +132,12 @@ class FruitsController extends AbstractController
     #[Route('/api/remove-favorite-fruit', name: 'remove_favorite_fruit')]
     public function removeFavoriteFruit(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        $fruitId = $request->query->getInt('fruit_id');
+        $fruitId = $request->get('fruit_id');
 
         if(!$fruitId) {
             return $this->json([
                 'message' => 'Please provide fruit_id so we can remove that from your basket of favorites!',
-            ]);
+            ], 400);
         }
 
 
@@ -141,7 +146,7 @@ class FruitsController extends AbstractController
         if (!$fruit) {
             return $this->json([
                 'message' => 'Requested fruit not found!',
-            ]);
+            ], 404);
         }
 
         $user = $this->security->getUser();
@@ -149,7 +154,7 @@ class FruitsController extends AbstractController
         if (empty($user)) {
             return $this->json([
                 'message' => 'You are not authenticated!',
-            ]);
+            ], 401);
         }
 
         $user = $entityManager->getRepository(User::class)->find($user->getId());
@@ -159,14 +164,14 @@ class FruitsController extends AbstractController
 
         if (!$favoriteFruits->contains($fruit)) {
             return $this->json([
-                'message' => 'This fruit is already NOT in your basket of favorites!',
-            ]);
+                'message' => $fruit->getName().' is already NOT in your basket of favorites!',
+            ], 400);
         }
 
         if (count($favoriteFruits) === 0) {
             return $this->json([
                 'message' => 'Your basket of favorite fruits is already empty!',
-            ]);
+            ], 400);
         }
 
         $user->getFavoriteFruits()->removeElement($fruit);
