@@ -19,6 +19,7 @@ class FruitNormalizer implements ContextAwareNormalizerInterface
             'family' => $object->getFamily(),
             'order' => $object->getFruitOrder(),
             'nutritions' => json_decode($object->getNutritions()),
+            'reveal' => false
         ];
     }
 
